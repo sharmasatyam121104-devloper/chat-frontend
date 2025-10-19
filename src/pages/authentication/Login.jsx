@@ -1,7 +1,17 @@
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { NavLink, useNavigate } from "react-router-dom";
+import { getOtherUsersThunk, loginUserThunk } from "../../store/slice/userSlice/user.thunk";
 
 const Login = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isAuthenticated, screenLoading } = useSelector((state) => state.user);
+  useEffect(() => {
+    if (isAuthenticated) navigate("/");
+  }, [isAuthenticated]);
+
   const [loginData, setLogindata] = useState({
     email: "",
     password: "",
@@ -14,23 +24,31 @@ const Login = () => {
     });
   };
 
-  const handleLogin= ()=>{
-    console.log("login");
-  }
+  const handleLogin = async () => {
+    const response = await dispatch(loginUserThunk(loginData));
+    
+    if (response.payload.success) {
+       await dispatch(getOtherUsersThunk());
+      if (window.innerWidth <= 768) {
+        navigate("/mobile-sidebar");
+      } else {
+        navigate("/");
+      }
+    }
+  };
 
   const handleSubmit = (e) => {
     if (!loginData.email || !loginData.password) {
-    alert("Please fill in both email and password!");
-    return; // submit stop
-  }
+      alert("Please fill in both email and password!");
+      return; // submit stop
+    }
     e.preventDefault();
-    console.log(loginData);
+    // console.log(loginData);
     //clear all data after submit
     setLogindata({
-    email: "",
-    password: "",
-  });
-
+      email: "",
+      password: "",
+    });
   };
 
   return (
@@ -63,8 +81,10 @@ const Login = () => {
         />
 
         <button
-        onClick={handleLogin}
-        className="btn btn-neutral mt-4 h-12 text-2xl" type="submit">
+          onClick={handleLogin}
+          className="btn btn-neutral mt-4 h-12 text-2xl"
+          type="submit"
+        >
           Login
         </button>
         <p className="">
